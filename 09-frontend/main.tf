@@ -15,35 +15,59 @@ module "frontend" {
   )
 }
 
-resource "null_resource" "frontend" {
-  # Changes to any instance of the cluster requires re-provisioning
-  triggers = {
-    instance_ids = module.frontend.id # this will be triggered everytime when instance is created
-  }
+# resource "null_resource" "frontend" {
+#   # Changes to any instance of the cluster requires re-provisioning
+#   triggers = {
+#     instance_ids = module.frontend.id # this will be triggered everytime when instance is created
+#   }
 
-  connection {
-    type = "ssh"
-    user = "ec2-user"
-    password = "DevOps321"
-    host = module.frontend.public_ip
+#   connection {
+#     type = "ssh"
+#     user = "ec2-user"
+#     password = "DevOps321"
+#     host = module.frontend.public_ip
   
-}
+# }
 
-# it will copy file from local to instance(server)
+# # it will copy file from local to instance(server)
+#     provisioner "file" {
+#     source = "${var.common_tags.Component}.sh"
+#     destination = "/tmp/${var.common_tags.Component}.sh"
+#   }
+
+#   provisioner "remote-exec" {
+#     inline = [ 
+#         "chmod +x /tmp/${var.common_tags.Component}.sh",
+#         "sudo sh /tmp/${var.common_tags.Component}.sh ${var.common_tags.Component} ${var.environment}"
+#         # ${var.common_tags.Component} --> frontend
+#      ]
+#   }
+# }
+
+resource "null_resource" "frontend" {
+    triggers = {
+      instance_id = module.frontend.id # this will be triggered everytime instance is created
+    }
+
+    connection {
+        type     = "ssh"
+        user     = "ec2-user"
+        password = "DevOps321"
+        host     = module.frontend.private_ip
+    }
+
     provisioner "file" {
-    source = "${var.common_tags.Component}.sh"
-    destination = "/tmp/${var.common_tags.Component}.sh"
-  }
+        source      = "${var.common_tags.Component}.sh"
+        destination = "/tmp/${var.common_tags.Component}.sh"
+    }
 
-  provisioner "remote-exec" {
-    inline = [ 
-        "chmod +x /tmp/${var.common_tags.Component}.sh",
-        "sudo sh /tmp/${var.common_tags.Component}.sh ${var.common_tags.Component} ${var.environment}"
-        # ${var.common_tags.Component} --> frontend
-     ]
-  }
+    provisioner "remote-exec" {
+        inline = [
+            "chmod +x /tmp/${var.common_tags.Component}.sh",
+            "sudo sh /tmp/${var.common_tags.Component}.sh ${var.common_tags.Component} ${var.environment}"
+        ]
+    } 
 }
-
 
 # ec2 stop
 resource "aws_ec2_instance_state" "frontend" {
