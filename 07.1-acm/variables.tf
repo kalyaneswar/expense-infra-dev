@@ -11,10 +11,15 @@ variable "common_tags" {
     project = "expense"
     environment = "dev"
     Terraform = "true"
-    Component = "backend"
+    Component = "app_alb"
   }
 }
 
+
 variable "zone_name" {
   default = "kalyaneswar.online"
+}
+
+variable "zone_id" {
+  default = "Z072957117A672LL98X43"
 }

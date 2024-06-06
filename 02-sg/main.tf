@@ -59,6 +59,15 @@ module "vpn" {
   ingress_rules = var.vpn_sg_rules
 }
 
+module "web_alb" {
+  source = "../../terraform-aws-securitygroup"
+  project_name = var.project_name
+  environment = var.environment
+  sg_description = "SG for Web ALB Instances"
+  vpc_id = data.aws_ssm_parameter.vpc_id.value
+  common_tags = var.common_tags
+  sg_name = "web-alb"
+}
 
 # DB is accepting connections from backend
 resource "aws_security_group_rule" "db_backend" {
@@ -132,15 +141,15 @@ resource "aws_security_group_rule" "backend_vpn_http" {
 
 
 # frontend is accepting connections from public/internet
-resource "aws_security_group_rule" "frontend_public" {
-  type              = "ingress"
-  from_port         = 80
-  to_port           = 80
-  protocol          = "tcp"
-#   source_security_group_id = module.frontend.sg_id #No source so cidr block
-  cidr_blocks = [ "0.0.0.0/0" ]
-  security_group_id = module.frontend.sg_id
-}
+# resource "aws_security_group_rule" "frontend_public" {
+#   type              = "ingress"
+#   from_port         = 80
+#   to_port           = 80
+#   protocol          = "tcp"
+# #   source_security_group_id = module.frontend.sg_id #No source so cidr block
+#   cidr_blocks = [ "0.0.0.0/0" ]
+#   security_group_id = module.frontend.sg_id
+# }
 
 # frontend is accepting connections from bastion
 resource "aws_security_group_rule" "frontend_bastion" {
@@ -174,3 +183,41 @@ resource "aws_security_group_rule" "app_alb_vpn" {
   source_security_group_id = module.vpn.sg_id #source is where ur getting traffic from
   security_group_id = module.app_alb.sg_id
 }
+
+# frontend is accepting connections from Web ALB
+resource "aws_security_group_rule" "frontend_web_alb" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  source_security_group_id = module.web_alb.sg_id 
+  security_group_id = module.frontend.sg_id
+}
+
+resource "aws_security_group_rule" "web_alb_public" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = module.web_alb.sg_id
+}
+
+resource "aws_security_group_rule" "web_alb_public_https" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = module.web_alb.sg_id
+}
+
+# not required, we can connect from VPN
+# resource "aws_security_group_rule" "frontend_public" {
+#   type              = "ingress"
+#   from_port         = 22
+#   to_port           = 22
+#   protocol          = "tcp"
+#   cidr_blocks = ["0.0.0.0/0"]
+#   security_group_id = module.frontend.sg_id
+# }
