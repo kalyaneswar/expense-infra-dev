@@ -30,7 +30,6 @@ pipeline {
                 message "Should we continue?"
                 ok "Yes, we should."
                 }
-            }
             steps {
                 sh """
                  cd 01-vpc
@@ -50,5 +49,5 @@ pipeline {
         failure { 
             echo 'I will run when pipeline is failure'
         }
-    }
-}
+    }  
+ }
